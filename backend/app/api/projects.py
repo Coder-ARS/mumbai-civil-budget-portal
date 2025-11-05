@@ -3,11 +3,13 @@ Project API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from sqlalchemy import select, func
+from typing import List, Optional, Dict, Any
 from uuid import UUID
+from decimal import Decimal
 
 from app.db.session import get_db
-from app.db import crud
+from app.db import crud, models
 from app import schemas
 
 router = APIRouter()
@@ -98,3 +100,58 @@ async def delete_project(
     if not success:
         raise HTTPException(status_code=404, detail="Project not found")
     return None
+
+
+@router.get("/stats/dashboard", response_model=Dict[str, Any])
+async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
+    """
+    Get dashboard statistics for all projects
+    
+    Returns:
+    - total_projects: Total number of projects
+    - total_budget: Total budget across all projects (in crores)
+    - projects_by_status: Count of projects by status
+    - active_projects: Number of in-progress projects
+    - completed_projects: Number of completed projects
+    """
+    # Get total projects count
+    total_result = await db.execute(select(func.count(models.Project.id)))
+    total_projects = total_result.scalar()
+    
+    # Get total budget
+    budget_result = await db.execute(
+        select(func.sum(models.Project.budget_amount))
+    )
+    total_budget_raw = budget_result.scalar() or 0
+    total_budget = float(Decimal(str(total_budget_raw)) / Decimal("10000000"))  # Convert to crores
+    
+    # Get projects by status
+    status_result = await db.execute(
+        select(
+            models.Project.status,
+            func.count(models.Project.id).label('count')
+        ).group_by(models.Project.status)
+    )
+    projects_by_status = {row[0]: row[1] for row in status_result.all()}
+    
+    # Get active (in_progress) projects
+    active_projects = projects_by_status.get('in_progress', 0)
+    
+    # Get completed projects
+    completed_projects = projects_by_status.get('completed', 0)
+    
+    # Get proposed projects
+    proposed_projects = projects_by_status.get('proposed', 0)
+    
+    # Get tendered projects
+    tendered_projects = projects_by_status.get('tendered', 0)
+    
+    return {
+        "total_projects": total_projects,
+        "total_budget": round(total_budget, 2),
+        "active_projects": active_projects,
+        "completed_projects": completed_projects,
+        "proposed_projects": proposed_projects,
+        "tendered_projects": tendered_projects,
+        "projects_by_status": projects_by_status
+    }

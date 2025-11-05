@@ -1,5 +1,5 @@
 """
-SQLAlchemy models for Mumbai Civil Budget Portal
+SQLAlchemy models for Mumbai Civic Budget Portal
 All tables with complete attributes as per the schema
 """
 from sqlalchemy import Column, String, Date, DateTime, Text, Integer, Boolean, Numeric, ForeignKey
@@ -41,6 +41,25 @@ class Project(Base):
     reports = relationship("Report", back_populates="project")
     approvals = relationship("Approval", back_populates="project")
     payments = relationship("Payment", back_populates="project")
+    comments = relationship("Comment", back_populates="project", cascade="all, delete-orphan")
+
+
+class Comment(Base):
+    """Public comments and reviews on projects"""
+    __tablename__ = "comments"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_name = Column(String(255), nullable=False)
+    author_email = Column(String(255), nullable=True)
+    comment_text = Column(Text, nullable=False)
+    rating = Column(Integer, nullable=True, comment="1-5 star rating, or null for no rating")
+    is_approved = Column(Boolean, default=True, nullable=False, comment="Moderation flag")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
+    # Relationships
+    project = relationship("Project", back_populates="comments")
 
 
 class Ward(Base):

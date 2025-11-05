@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from typing import Optional, List, Dict, Any
 from uuid import UUID
+from geoalchemy2.functions import ST_AsGeoJSON, ST_X, ST_Y
 
 from app.db import models
 from app import schemas
@@ -34,8 +35,12 @@ async def get_projects(
     filters: schemas.ProjectFilter
 ) -> tuple[List[models.Project], int]:
     """Get projects with filtering and pagination"""
-    # Build base query
-    stmt = select(models.Project).options(selectinload(models.Project.ward))
+    # Build base query - select all Project columns
+    stmt = select(
+        models.Project,
+        ST_X(models.Project.centroid).label('lng'),
+        ST_Y(models.Project.centroid).label('lat')
+    ).options(selectinload(models.Project.ward))
     count_stmt = select(func.count(models.Project.id))
     
     # Apply filters
@@ -78,9 +83,22 @@ async def get_projects(
     )
     
     result = await db.execute(stmt)
-    projects = result.scalars().all()
+    rows = result.all()
     
-    return list(projects), total
+    # Process results to add centroid as tuple
+    projects = []
+    for row in rows:
+        project = row[0]  # Project object
+        lng = row[1]      # longitude
+        lat = row[2]      # latitude
+        
+        # Add centroid as tuple if coordinates exist
+        if lng is not None and lat is not None:
+            project.centroid = (lng, lat)
+        
+        projects.append(project)
+    
+    return projects, total
 
 
 async def create_project(
@@ -377,3 +395,82 @@ async def create_report(db: AsyncSession, report_data: schemas.ReportCreate) -> 
     await db.commit()
     await db.refresh(report)
     return report
+
+
+# ==================== Comment CRUD ====================
+async def get_project_comments(
+    db: AsyncSession,
+    project_id: UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> List[models.Comment]:
+    """Get all approved comments for a project"""
+    stmt = (
+        select(models.Comment)
+        .where(
+            and_(
+                models.Comment.project_id == project_id,
+                models.Comment.is_approved == True
+            )
+        )
+        .order_by(models.Comment.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_comment(db: AsyncSession, comment_id: UUID) -> Optional[models.Comment]:
+    """Get a single comment by ID"""
+    stmt = select(models.Comment).where(models.Comment.id == comment_id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def create_comment(
+    db: AsyncSession,
+    comment_data: schemas.CommentCreate
+) -> models.Comment:
+    """Create a new comment"""
+    comment = models.Comment(**comment_data.dict())
+    db.add(comment)
+    await db.commit()
+    await db.refresh(comment)
+    return comment
+
+
+async def update_comment(
+    db: AsyncSession,
+    comment_id: UUID,
+    comment_update: schemas.CommentUpdate
+) -> Optional[models.Comment]:
+    """Update a comment"""
+    stmt = select(models.Comment).where(models.Comment.id == comment_id)
+    result = await db.execute(stmt)
+    comment = result.scalar_one_or_none()
+    
+    if not comment:
+        return None
+    
+    update_data = comment_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(comment, field, value)
+    
+    await db.commit()
+    await db.refresh(comment)
+    return comment
+
+
+async def delete_comment(db: AsyncSession, comment_id: UUID) -> bool:
+    """Delete a comment"""
+    stmt = select(models.Comment).where(models.Comment.id == comment_id)
+    result = await db.execute(stmt)
+    comment = result.scalar_one_or_none()
+    
+    if not comment:
+        return False
+    
+    await db.delete(comment)
+    await db.commit()
+    return True

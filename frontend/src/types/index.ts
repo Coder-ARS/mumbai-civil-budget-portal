@@ -1,5 +1,5 @@
 /**
- * Type definitions for Mumbai Civil Budget Portal
+ * Type definitions for Mumbai Civic Budget Portal
  * Matching backend API models
  */
 
@@ -56,7 +56,7 @@ export interface ProjectSummary {
   budget_currency: string | null;
   confidence_score: number | null;
   ward_id: string | null;
-  centroid?: Point | null;
+  centroid?: [number, number] | null;  // [longitude, latitude]
   geom?: Geometry | null;
   created_at: string;
   updated_at: string;
@@ -208,8 +208,37 @@ export interface ReportCreateForm {
   photos?: File[];
 }
 
+export interface Comment {
+  id: string;
+  project_id: string;
+  author_name: string;
+  author_email?: string | null;
+  comment_text: string;
+  rating?: number | null;  // 1-5 stars
+  is_approved: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommentCreateData {
+  author_name: string;
+  author_email?: string;
+  comment_text: string;
+  rating?: number;  // 1-5 stars
+}
+
 export interface CommentCreateForm {
   text: string;
   photos?: File[];
   update_type: UpdateType;
+}
+
+export interface DashboardStats {
+  total_projects: number;
+  total_budget: number;  // in crores
+  active_projects: number;
+  completed_projects: number;
+  proposed_projects: number;
+  tendered_projects: number;
+  projects_by_status: Record<string, number>;
 }

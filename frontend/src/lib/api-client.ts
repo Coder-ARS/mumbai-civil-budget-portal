@@ -1,5 +1,5 @@
 /**
- * API Client for Mumbai Civil Budget Portal Backend
+ * API Client for Mumbai Civic Budget Portal Backend
  * Base URL and axios configuration
  */
 
@@ -19,17 +19,19 @@ import type {
   ProjectCreateForm,
   ReportCreateForm,
   ApiError,
+  Comment,
+  CommentCreateData,
+  DashboardStats,
 } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
-const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: `${API_BASE_URL}/api/${API_VERSION}`,
+      baseURL: `${API_BASE_URL}/api/v1`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -52,6 +54,11 @@ class ApiClient {
   // Projects
   async getProjects(filters?: ProjectFilters): Promise<PaginatedResponse<ProjectSummary>> {
     const { data } = await this.client.get('/projects', { params: filters });
+    return data;
+  }
+
+  async getDashboardStats(): Promise<DashboardStats> {
+    const { data } = await this.client.get('/projects/stats/dashboard');
     return data;
   }
 
@@ -152,6 +159,23 @@ class ApiClient {
   async createReport(report: ReportCreateForm): Promise<Report> {
     const { data } = await this.client.post('/reports', report);
     return data;
+  }
+
+  // Comments
+  async getProjectComments(projectId: string, skip = 0, limit = 100): Promise<Comment[]> {
+    const { data } = await this.client.get(`/projects/${projectId}/comments`, {
+      params: { skip, limit },
+    });
+    return data;
+  }
+
+  async createComment(projectId: string, commentData: CommentCreateData): Promise<Comment> {
+    const { data } = await this.client.post(`/projects/${projectId}/comments`, commentData);
+    return data;
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    await this.client.delete(`/projects/comments/${commentId}`);
   }
 
   // Health check

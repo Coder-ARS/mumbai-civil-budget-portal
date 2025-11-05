@@ -1,5 +1,5 @@
 /**
- * Utility functions for Mumbai Civil Budget Portal
+ * Utility functions for Mumbai Civic Budget Portal
  */
 
 import { type ClassValue, clsx } from 'clsx';

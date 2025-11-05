@@ -6,10 +6,10 @@ import '@/styles/globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Mumbai Civil Budget Portal',
+  title: 'Mumbai Civic Budget Portal',
   description: 'Track infrastructure projects, tenders, and civic developments across Mumbai',
   keywords: ['Mumbai', 'infrastructure', 'projects', 'tenders', 'civic', 'BMC', 'MCGM'],
-  authors: [{ name: 'Mumbai Civil Budget Portal Team' }],
+  authors: [{ name: 'Mumbai Civic Budget Portal Team' }],
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };
 

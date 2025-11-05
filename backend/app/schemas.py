@@ -2,7 +2,7 @@
 Pydantic schemas for API request/response validation
 """
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from datetime import date, datetime
 from uuid import UUID
 from decimal import Decimal
@@ -65,8 +65,33 @@ class ProjectSummary(BaseModel):
     budget_currency: Optional[str]
     confidence_score: Optional[Decimal]
     ward_id: Optional[UUID]
+    centroid: Optional[Tuple[float, float]] = None  # [lng, lat]
     created_at: datetime
     updated_at: datetime
+    
+    @validator('centroid', pre=True, always=True)
+    def parse_centroid(cls, v):
+        """Convert PostGIS geometry to [lng, lat] tuple"""
+        if v is None:
+            return None
+        # If it's already a tuple/list, return it
+        if isinstance(v, (tuple, list)):
+            return tuple(v)
+        # If it's a WKBElement from PostGIS, parse it
+        try:
+            if hasattr(v, '__geo_interface__'):
+                coords = v.__geo_interface__['coordinates']
+                return tuple(coords)
+        except Exception:
+            pass
+        # Try to get data from WKBElement directly
+        try:
+            from geoalchemy2.shape import to_shape
+            point = to_shape(v)
+            return (point.x, point.y)
+        except Exception:
+            pass
+        return None
     
     class Config:
         orm_mode = True
@@ -291,6 +316,35 @@ class Document(DocumentBase):
     id: UUID
     s3_url: Optional[str]
     uploaded_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
+# ==================== Comment Schemas ====================
+class CommentBase(BaseModel):
+    author_name: str = Field(..., min_length=1, max_length=255)
+    author_email: Optional[str] = Field(None, max_length=255)
+    comment_text: str = Field(..., min_length=1)
+    rating: Optional[int] = Field(None, ge=1, le=5)
+
+
+class CommentCreate(CommentBase):
+    project_id: UUID
+
+
+class CommentUpdate(BaseModel):
+    comment_text: Optional[str] = Field(None, min_length=1)
+    rating: Optional[int] = Field(None, ge=1, le=5)
+    is_approved: Optional[bool] = None
+
+
+class Comment(CommentBase):
+    id: UUID
+    project_id: UUID
+    is_approved: bool
+    created_at: datetime
+    updated_at: datetime
     
     class Config:
         orm_mode = True

@@ -6,6 +6,7 @@ import asyncio
 from datetime import date, timedelta
 from decimal import Decimal
 
+from geoalchemy2.elements import WKTElement
 from app.db.session import AsyncSessionLocal
 from app.db import models
 
@@ -163,7 +164,8 @@ async def seed_database():
                     "start_date": date(2023, 1, 15),
                     "expected_end_date": date(2025, 12, 31),
                     "confidence_score": Decimal("0.95"),
-                    "external_ids": {"mcgm": "MCGM-COAST-2023-001"}
+                    "external_ids": {"mcgm": "MCGM-COAST-2023-001"},
+                    "centroid": "POINT(72.8162 18.9932)"  # Worli Sea Face
                 },
                 {
                     "title": "Andheri Metro Station Upgradation",
@@ -175,7 +177,8 @@ async def seed_database():
                     "start_date": date(2024, 6, 1),
                     "expected_end_date": date(2026, 3, 31),
                     "confidence_score": Decimal("0.88"),
-                    "external_ids": {"mmrc": "MMRC-ANE-2024-012"}
+                    "external_ids": {"mmrc": "MMRC-ANE-2024-012"},
+                    "centroid": "POINT(72.8697 19.1197)"  # Andheri East
                 },
                 {
                     "title": "Bandra-Kurla Complex Road Widening",
@@ -186,7 +189,8 @@ async def seed_database():
                     "budget_currency": "INR",
                     "start_date": date(2024, 2, 1),
                     "expected_end_date": date(2025, 8, 31),
-                    "confidence_score": Decimal("0.92")
+                    "confidence_score": Decimal("0.92"),
+                    "centroid": "POINT(72.8681 19.0633)"  # BKC
                 },
                 {
                     "title": "Colaba Water Supply Network Upgrade",
@@ -197,7 +201,8 @@ async def seed_database():
                     "budget_currency": "INR",
                     "start_date": date(2023, 9, 1),
                     "expected_end_date": date(2024, 12, 31),
-                    "confidence_score": Decimal("0.85")
+                    "confidence_score": Decimal("0.85"),
+                    "centroid": "POINT(72.8347 18.9067)"  # Colaba
                 },
                 {
                     "title": "Malad Smart City Initiative",
@@ -208,7 +213,8 @@ async def seed_database():
                     "budget_currency": "INR",
                     "start_date": None,
                     "expected_end_date": None,
-                    "confidence_score": Decimal("0.65")
+                    "confidence_score": Decimal("0.65"),
+                    "centroid": "POINT(72.8489 19.1866)"  # Malad
                 },
                 {
                     "title": "Dadar Market Renovation",
@@ -219,7 +225,8 @@ async def seed_database():
                     "budget_currency": "INR",
                     "start_date": date(2022, 4, 1),
                     "expected_end_date": date(2023, 10, 31),
-                    "confidence_score": Decimal("0.98")
+                    "confidence_score": Decimal("0.98"),
+                    "centroid": "POINT(72.8431 19.0176)"  # Dadar
                 },
                 {
                     "title": "Borivali National Park Buffer Zone Development",
@@ -230,7 +237,8 @@ async def seed_database():
                     "budget_currency": "INR",
                     "start_date": date(2023, 11, 1),
                     "expected_end_date": date(2025, 6, 30),
-                    "confidence_score": Decimal("0.78")
+                    "confidence_score": Decimal("0.78"),
+                    "centroid": "POINT(72.8593 19.2403)"  # Borivali
                 },
                 {
                     "title": "Kurla MSEB Substation Modernization",
@@ -241,12 +249,17 @@ async def seed_database():
                     "budget_currency": "INR",
                     "start_date": date(2024, 8, 1),
                     "expected_end_date": date(2025, 12, 31),
-                    "confidence_score": Decimal("0.82")
+                    "confidence_score": Decimal("0.82"),
+                    "centroid": "POINT(72.8794 19.0728)"  # Kurla
                 }
             ]
             
             project_objects = []
             for project_data in sample_projects:
+                # Convert centroid string to WKTElement for PostGIS
+                if "centroid" in project_data:
+                    project_data["centroid"] = WKTElement(project_data["centroid"], srid=4326)
+                
                 project = models.Project(**project_data)
                 db.add(project)
                 project_objects.append(project)

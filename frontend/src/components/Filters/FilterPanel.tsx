@@ -1,23 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Filter, X } from 'lucide-react';
+import { Filter, X, ChevronLeft } from 'lucide-react';
 import { useAppStore } from '@/store';
 import type { ProjectStatus } from '@/types';
 
-export default function FilterPanel() {
+export default function FilterPanel({ onClose }: { onClose?: () => void }) {
   const { filters, setFilters, wards } = useAppStore();
-  const [searchQuery, setSearchQuery] = useState(filters.q || '');
-  const [showFilters, setShowFilters] = useState(false);
-
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFilters({ ...filters, q: searchQuery });
-  };
+  const [showFilters, setShowFilters] = useState(true);
 
   const handleStatusChange = (status: ProjectStatus | '') => {
     setFilters({ ...filters, status: status || undefined });
@@ -28,53 +18,48 @@ export default function FilterPanel() {
   };
 
   const clearFilters = () => {
-    setSearchQuery('');
     setFilters({});
   };
 
   const activeFilterCount = Object.keys(filters).filter(
-    (key) => key !== 'skip' && key !== 'limit' && filters[key as keyof typeof filters]
+    (key) => key !== 'skip' && key !== 'limit' && key !== 'q' && filters[key as keyof typeof filters]
   ).length;
 
   return (
-    <div className="bg-white border-b shadow-sm">
-      {/* Search Bar */}
-      <div className="p-4">
-        <form onSubmit={handleSearchSubmit} className="relative">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search projects..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+    <div className="bg-white h-full flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+          <Filter className="h-5 w-5" />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">
+              {activeFilterCount}
+            </span>
+          )}
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="text-gray-500 hover:text-gray-700 text-sm"
+          >
+            {showFilters ? 'Hide' : 'Show'}
+          </button>
+          {onClose && (
             <button
-              type="button"
-              onClick={() => setShowFilters(!showFilters)}
-              className={`
-                px-4 py-2 rounded-lg border transition-colors flex items-center gap-2
-                ${showFilters ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}
-              `}
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded"
+              title="Close sidebar"
             >
-              <Filter className="h-5 w-5" />
-              <span className="hidden sm:inline">Filters</span>
-              {activeFilterCount > 0 && (
-                <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">
-                  {activeFilterCount}
-                </span>
-              )}
+              <ChevronLeft className="h-5 w-5" />
             </button>
-          </div>
-        </form>
+          )}
+        </div>
       </div>
 
       {/* Filter Options */}
       {showFilters && (
-        <div className="px-4 pb-4 space-y-4 border-t pt-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Status Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

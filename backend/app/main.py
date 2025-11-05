@@ -1,6 +1,6 @@
 """
 Main FastAPI application entry point
-Mumbai Civil Budget Portal - Backend API
+Mumbai Civic Budget Portal - Backend API
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,13 +14,14 @@ from app.api import (
     tenders,
     contracts,
     progress_updates,
-    reports
+    reports,
+    comments
 )
 
 # Create FastAPI app instance
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="API for Mumbai Civil Budget Portal - Track infrastructure projects, tenders, and citizen reports",
+    description="API for Mumbai Civic Budget Portal - Track infrastructure projects, tenders, and citizen reports",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -43,13 +44,14 @@ app.include_router(tenders.router, prefix="/api/v1/tenders", tags=["Tenders"])
 app.include_router(contracts.router, prefix="/api/v1/contracts", tags=["Contracts"])
 app.include_router(progress_updates.router, prefix="/api/v1/progress-updates", tags=["Progress Updates"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
+app.include_router(comments.router, prefix="/api/v1/projects", tags=["Comments"])
 
 
 @app.get("/", tags=["Health"])
 async def root():
     """Root endpoint - API health check"""
     return {
-        "message": "Mumbai Civil Budget Portal API",
+        "message": "Mumbai Civic Budget Portal API",
         "status": "operational",
         "version": "1.0.0",
         "docs": "/docs"
