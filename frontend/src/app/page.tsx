@@ -100,87 +100,91 @@ export default function HomePage() {
 
       {/* Main Content - No Scrolling */}
       <div className="flex-1 overflow-hidden relative">
-        {/* Full-Width Background: Dashboard Stats + Map */}
-        <div className="h-full w-full flex flex-col bg-white">
-          {/* Dashboard Stats - Full Width */}
-          {stats && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 shadow-sm z-0">
-              <div className="px-4 py-3">
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                  {/* Total Projects */}
-                  <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Total Projects</p>
-                        <p className="text-xl font-bold text-gray-900 mt-1">{stats.total_projects.toLocaleString()}</p>
-                      </div>
-                      <div className="ml-2 bg-blue-100 rounded-lg p-2">
-                        <FolderKanban className="h-5 w-5 text-blue-600" />
-                      </div>
+        {/* Map - Full Width Background */}
+        <div className="h-full w-full">
+          <MumbaiMap key={`map-${showFilters}-${showProjects}`} showLeftSidebar={showFilters} />
+        </div>
+
+        {/* Dashboard Stats - Positioned between sidebars */}
+        {stats && (
+          <div 
+            className="absolute top-0 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 shadow-sm z-10 transition-all duration-300"
+            style={{
+              left: showFilters ? '320px' : '0px',
+              right: showProjects ? '384px' : '0px',
+            }}
+          >
+            <div className="px-4 py-3">
+              <div className="flex gap-3 items-stretch">
+                {/* Total Projects */}
+                <div className="flex-1 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100 min-w-0">
+                  <div className="flex items-center justify-between h-full">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Total</p>
+                      <p className="text-xl font-bold text-gray-900 mt-1">{stats.total_projects}</p>
+                    </div>
+                    <div className="ml-2 bg-blue-100 rounded-lg p-2 flex-shrink-0">
+                      <FolderKanban className="h-5 w-5 text-blue-600" />
                     </div>
                   </div>
+                </div>
 
-                  {/* Total Budget */}
-                  <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Total Budget</p>
-                        <p className="text-xl font-bold text-gray-900 mt-1">₹{stats.total_budget.toLocaleString()} Cr</p>
-                      </div>
-                      <div className="ml-2 bg-green-100 rounded-lg p-2">
-                        <DollarSign className="h-5 w-5 text-green-600" />
-                      </div>
+                {/* Total Budget */}
+                <div className="flex-1 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100 min-w-0">
+                  <div className="flex items-center justify-between h-full">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Budget</p>
+                      <p className="text-lg font-bold text-gray-900 mt-1">₹{stats.total_budget.toLocaleString()}</p>
+                      <p className="text-[10px] text-gray-500">Crores</p>
+                    </div>
+                    <div className="ml-2 bg-green-100 rounded-lg p-2 flex-shrink-0">
+                      <DollarSign className="h-5 w-5 text-green-600" />
                     </div>
                   </div>
+                </div>
 
-                  {/* Active Projects */}
-                  <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Active</p>
-                        <p className="text-xl font-bold text-gray-900 mt-1">{stats.active_projects.toLocaleString()}</p>
-                      </div>
-                      <div className="ml-2 bg-orange-100 rounded-lg p-2">
-                        <Activity className="h-5 w-5 text-orange-600" />
-                      </div>
+                {/* Active Projects */}
+                <div className="flex-1 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100 min-w-0">
+                  <div className="flex items-center justify-between h-full">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Active</p>
+                      <p className="text-xl font-bold text-gray-900 mt-1">{stats.active_projects}</p>
+                    </div>
+                    <div className="ml-2 bg-orange-100 rounded-lg p-2 flex-shrink-0">
+                      <Activity className="h-5 w-5 text-orange-600" />
                     </div>
                   </div>
+                </div>
 
-                  {/* Completed Projects */}
-                  <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Completed</p>
-                        <p className="text-xl font-bold text-gray-900 mt-1">{stats.completed_projects.toLocaleString()}</p>
-                      </div>
-                      <div className="ml-2 bg-emerald-100 rounded-lg p-2">
-                        <CheckCircle className="h-5 w-5 text-emerald-600" />
-                      </div>
+                {/* Completed Projects */}
+                <div className="flex-1 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100 min-w-0">
+                  <div className="flex items-center justify-between h-full">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Done</p>
+                      <p className="text-xl font-bold text-gray-900 mt-1">{stats.completed_projects}</p>
+                    </div>
+                    <div className="ml-2 bg-emerald-100 rounded-lg p-2 flex-shrink-0">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
                     </div>
                   </div>
+                </div>
 
-                  {/* Proposed Projects */}
-                  <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Proposed</p>
-                        <p className="text-xl font-bold text-gray-900 mt-1">{stats.proposed_projects.toLocaleString()}</p>
-                      </div>
-                      <div className="ml-2 bg-purple-100 rounded-lg p-2">
-                        <TrendingUp className="h-5 w-5 text-purple-600" />
-                      </div>
+                {/* Proposed Projects */}
+                <div className="flex-1 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-100 min-w-0">
+                  <div className="flex items-center justify-between h-full">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Proposed</p>
+                      <p className="text-xl font-bold text-gray-900 mt-1">{stats.proposed_projects}</p>
+                    </div>
+                    <div className="ml-2 bg-purple-100 rounded-lg p-2 flex-shrink-0">
+                      <TrendingUp className="h-5 w-5 text-purple-600" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Map Container - Full Width */}
-          <div className="flex-1 overflow-hidden w-full">
-            <MumbaiMap key={`map-${showFilters}-${showProjects}`} />
           </div>
-        </div>
+        )}
 
         {/* Left Sidebar - Overlay on top of map */}
         <div 

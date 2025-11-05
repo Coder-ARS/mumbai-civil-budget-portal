@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Plus, Minus } from 'lucide-react';
 import { useAppStore } from '@/store';
 import type { Project } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -24,19 +25,12 @@ const MUMBAI_BOUNDS: L.LatLngBoundsExpression = [
 
 const MUMBAI_CENTER: L.LatLngExpression = [19.076, 72.8777];
 
-// Component to handle map bounds restriction
+// Component to handle map bounds restriction (removed aggressive panning)
 function MapBoundsHandler() {
   const map = useMap();
 
   useEffect(() => {
-    const bounds = L.latLngBounds([
-      [18.89, 72.77], // Southwest
-      [19.27, 72.98], // Northeast
-    ]);
-    map.setMaxBounds(bounds);
-    map.on('drag', function () {
-      map.panInsideBounds(bounds, { animate: false });
-    });
+    // Bounds are set via MapContainer props, no need for extra drag restrictions
   }, [map]);
 
   return null;
@@ -106,10 +100,9 @@ const getMarkerIcon = (status: string, title: string) => {
 interface MumbaiMapProps {
   onProjectClick?: (project: Project) => void;
   showLeftSidebar?: boolean;
-  showRightSidebar?: boolean;
 }
 
-export default function MumbaiMap({ onProjectClick, showLeftSidebar = false, showRightSidebar = false }: MumbaiMapProps) {
+export default function MumbaiMap({ onProjectClick, showLeftSidebar = false }: MumbaiMapProps) {
   const { projects } = useAppStore();
   const mapRef = useRef<L.Map | null>(null);
   const router = useRouter();
@@ -129,27 +122,30 @@ export default function MumbaiMap({ onProjectClick, showLeftSidebar = false, sho
     router.push(`/projects/${projectId}`);
   };
 
+  const handleZoomIn = () => {
+    if (mapRef.current) {
+      mapRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapRef.current) {
+      mapRef.current.zoomOut();
+    }
+  };
+
   return (
     <div className="h-full w-full relative">
-      {/* Custom CSS to position Leaflet zoom controls */}
-      <style jsx global>{`
-        .leaflet-control-zoom {
-          margin-left: ${showLeftSidebar ? '10px' : '10px'} !important;
-          margin-top: 10px !important;
-          transition: margin-left 300ms ease !important;
-        }
-      `}</style>
-      
       <MapContainer
         center={MUMBAI_CENTER}
         zoom={11}
         className="h-full w-full z-0"
         maxBounds={MUMBAI_BOUNDS}
-        maxBoundsViscosity={1.0}
+        maxBoundsViscosity={0.5}
         minZoom={10}
         maxZoom={18}
         ref={mapRef}
-        zoomControl={true}
+        zoomControl={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -209,31 +205,54 @@ export default function MumbaiMap({ onProjectClick, showLeftSidebar = false, sho
       </MapContainer>
 
       {/* Map Legend - Grid Layout */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg z-[1000]">
-        <h4 className="font-semibold text-sm mb-3 text-center text-gray-900">Project Status</h4>
-        <div className="grid grid-cols-3 gap-3">
+      {/* Map Legend - Single Line Layout */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-4 py-2 rounded-lg shadow-lg z-[1000]">
+        <div className="flex items-center gap-4">
+          <span className="font-semibold text-sm text-gray-900 mr-2">Project Status:</span>
           {[
             { status: 'proposed', label: 'Proposed', color: '#6B7280' },
             { status: 'tendered', label: 'Tendered', color: '#3B82F6' },
             { status: 'awarded', label: 'Awarded', color: '#F59E0B' },
             { status: 'in_progress', label: 'In Progress', color: '#10B981' },
             { status: 'completed', label: 'Completed', color: '#059669' },
-          ].map((item, index) => (
+          ].map((item) => (
             <div
               key={item.status}
-              className={`flex items-center justify-center p-1 rounded-lg border-2 ${
-                index >= 3 ? 'col-span-1' : ''
-              }`}
-              style={{ borderColor: item.color, minWidth: '100px' }}
+              className="flex items-center gap-2"
             >
               <div
                 style={{ backgroundColor: item.color }}
-                className="w-1 h-1 rounded-md mb-1 pr-2 shadow-sm"
+                className="w-3 h-3 rounded-sm shadow-sm"
               />
-              <span className="text-xs font-medium pl-2 text-gray-700 text-center">{item.label}</span>
+              <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{item.label}</span>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Custom Zoom Controls - Bottom Left */}
+      <div 
+        className="absolute bottom-4 bg-white rounded-lg shadow-lg z-[1000] flex flex-col transition-all duration-300"
+        style={{
+          left: showLeftSidebar ? '340px' : '20px',
+        }}
+      >
+        <button
+          onClick={handleZoomIn}
+          className="p-2 hover:bg-gray-100 border-b border-gray-200 rounded-t-lg transition-colors"
+          title="Zoom In"
+          aria-label="Zoom In"
+        >
+          <Plus className="w-5 h-5 text-gray-700" />
+        </button>
+        <button
+          onClick={handleZoomOut}
+          className="p-2 hover:bg-gray-100 rounded-b-lg transition-colors"
+          title="Zoom Out"
+          aria-label="Zoom Out"
+        >
+          <Minus className="w-5 h-5 text-gray-700" />
+        </button>
       </div>
     </div>
   );
